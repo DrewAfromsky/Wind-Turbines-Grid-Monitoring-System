@@ -1,9 +1,6 @@
 ## Smart Grid Monitoring System
 
-
-<div align="center">
-	<img alt="Architecture" src="Architecture.pdf" alt="Architecture">
-</div>
+![Architecture](https://github.com/DrewAfromsky/Wind-Turbines-Grid-Monitoring-System/blob/main/Architecture.pdf)
 
 
 ##### Problem Overview
