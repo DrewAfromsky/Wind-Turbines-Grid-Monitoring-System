@@ -1,0 +1,28 @@
+services:
+  grid-monitor-app:
+    image: smartgridmonitor-gm:latest
+    depends_on:
+      - test
+    working_dir: /code
+    ports:
+      - "8787:8787"
+    volumes:
+      - metrics_data:/code/metrics_data
+
+  wind-turbines:
+    image: smartgridmonitor-wt:latest
+    depends_on:
+      - grid-monitor-app
+    working_dir: /code
+    ports:
+      - "8501:8501"
+    volumes:
+      - metrics_data:/code/metrics_data
+
+  test:
+    image: smartgridmonitor-test:latest
+
+# Shared volume required b/c the GridMonitor creates the metrics_data directory for the WindTurbines 
+# to write to and the streamlit app needs to read from it to display the data in the browser
+volumes:
+  metrics_data:
