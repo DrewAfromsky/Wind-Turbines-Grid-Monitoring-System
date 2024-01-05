@@ -1,5 +1,8 @@
 ## Smart Grid Monitoring System
 
+
+![[Architecture.pdf]]
+
 ##### Problem Overview
 - Wind turbines emit metrics (`turbine_number, wind_speed, power_output_in_kwh, operational_status`) at some frequency, asynchronously; whether it is in an `"ok"` operational state or not (`"broken"`)
 	- To simulate broken turbines, we define a number of seconds from the start or repair times, that the turbine should change its status to a `"broken"` operational status state
