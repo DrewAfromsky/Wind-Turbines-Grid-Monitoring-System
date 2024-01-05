@@ -3,7 +3,9 @@
 
 ![Architecture](./Architecture.pdf)
 
-<img alt="Architecture" src="./Architecture.pdf" alt="Architecture">
+  <br />
+    <img alt="Architecture" src="./Architecture.pdf" alt="Architecture">
+  <br />
 
 ##### Problem Overview
 - Wind turbines emit metrics (`turbine_number, wind_speed, power_output_in_kwh, operational_status`) at some frequency, asynchronously; whether it is in an `"ok"` operational state or not (`"broken"`)
