@@ -2,11 +2,11 @@ import asyncio
 import random
 from contextlib import asynccontextmanager
 from enum import Enum
-# import logging
 from typing import List
 import aiofiles
 from pathlib import Path
-from utils.utils import produce_random_wind_speed, produce_random_power_output_in_kwh
+from utils.utils import produce_random_wind_speed, produce_random_power_output_in_kwh, \
+    produce_random_time_to_fail_in_seconds, produce_random_time_to_repair_in_seconds
 
 import httpx
 import typer
@@ -18,8 +18,6 @@ import time
 from pydantic import BaseModel
 
 app = typer.Typer() 
-
-# logger = logging.basicConfig(level=logging.INFO)
 
 
 class OperationalStatus(str, Enum):
@@ -82,7 +80,7 @@ class WindTurbine:
         self.grid_monitor_url = grid_monitor_url
 
     async def produce_metrics(self, turbine_metrics: TurbineMetrics) -> None:
-        """Produce turbine metrics.
+        """Produce wind turbine metrics.
 
         Args:
             turbine_metrics (TurbineMetrics): Metrics to be pushed to the grid monitor app.
@@ -99,8 +97,7 @@ class WindTurbine:
     async def repair(self):
         """Repair the wind turbine."""
         try:
-            # Pull from the repairs queue
-            await self.collect_repairs()
+            await self.collect_repairs()  # Pull from the repairs queue
             await asyncio.sleep(self.time_to_repair_in_seconds)
             self.operational_status = OperationalStatus.ok
             self.time_passed_in_seconds = 0.0
@@ -109,9 +106,9 @@ class WindTurbine:
             raise e
 
     async def receive_repairs(self):
-        """Receive repairs for the wind turbine
-        
-        Note: This function should call repair when an engineer has been assigned to fix it.
+        """Receive repairs for the wind turbine.
+
+        Note: Put a TurbineMetrics object in the repairs queue and wait for it to be repaired.
         """
         try:
             # Put a message in the queue to indicate that the turbine is broken
@@ -140,15 +137,14 @@ class WindTurbine:
     async def produce_metrics_indefinitely(self) -> None:
         """Produce metrics indefinitely.
 
-        While the turbine is running, it should produce metrics every upload_frequency_in_seconds.
-        While the grid monitor app is running, it should collect metrics every upload_frequency_in_seconds.
-        If the turbine has been running for time_to_fail_in_seconds or more, its status should be changed to broken,
-            and it should start waiting for repairs, but still produce metrics.
+        Note: While the turbine is running, it should produce metrics every upload_frequency_in_seconds.
+            While the grid monitor app is running, it should collect metrics every upload_frequency_in_seconds.
+            If the turbine has been running for time_to_fail_in_seconds or more, its status should be changed to broken,
+                and it should start waiting for repairs, but still produce metrics.
         """
 
         while True:
-        # OPTIONAL: Run the grid monitor app for 30 seconds
-        # for _ in range(30):  
+        # for _ in range(30):  Run the grid monitor app for 30 seconds
             await self.produce_metrics(
                 TurbineMetrics(
                     turbine_number=self.turbine_number,
@@ -164,10 +160,9 @@ class WindTurbine:
             # Change the status to broken if the turbine has been running for time_to_fail_in_seconds or more
             if self.time_passed_in_seconds >= self.time_to_fail_in_seconds:
                 self.operational_status = OperationalStatus.broken
-                # OPTIONAL: Simulate new metrics when the turbine becomes broken then repaired
+                # NOTE: Simulate new metrics when the turbine becomes broken then repaired
                 # self.wind_speed = produce_random_wind_speed()
                 # self.power_output_in_kwh = produce_random_power_output_in_kwh()
-
 
     async def receive_repairs_indefinitely(self) -> None:
         """Receive repairs indefinitely.
@@ -234,11 +229,15 @@ def run_wind_turbine(
     for turbine_number in range(1, 6):        
         random_wind_speed = produce_random_wind_speed()
         random_power_output_in_kwh = produce_random_power_output_in_kwh()
+        random_time_to_fail_in_seconds = produce_random_time_to_fail_in_seconds()
+        random_time_to_repair_in_seconds = produce_random_time_to_repair_in_seconds()
 
         wind_turbine = WindTurbine(
             turbine_number,
             random_wind_speed,
             random_power_output_in_kwh,
+            time_to_fail_in_seconds=random_time_to_fail_in_seconds,
+            time_to_repair_in_seconds=random_time_to_repair_in_seconds
         )
         turbines.append(wind_turbine)
 
@@ -273,16 +272,15 @@ class GridMonitor:
         # If there are no engineers available, log a message saying so. And wait for an engineer to become available.
         if self.engineer_count == 0:
             print("No engineers available. Waiting for one to become available.")
-            # logging.info("No engineers available. Waiting for one to become available.")
             # return
         # If there are engineers available, dispatch one to fix the turbine.
         else:
             self.engineer_count -= 1  # Decrement the number of available repair engineers
             print(f"Dispatching an engineer to fix turbine: {turbine_number}")
-            # logging.info(f"Dispatching an engineer to fix turbine: {turbine_number}")
             try:
                 await WindTurbine(turbine_number, wind_speed, power_output_in_kwh).receive_repairs()
             except Exception as e:
+                self.engineer_count += 1  # Increment the number of available repair engineers
                 print(f"Could not dispatch an engineer to fix turbine: {turbine_number}\n", e)
                 raise e
 
@@ -305,11 +303,10 @@ class GridMonitor:
         """
         # Alternative: Store metrics in a database (e.g. S3, MongoDB, PostgreSQL, DynamoDB, etc.)
         project_dir = Path(__file__).parent.parent.absolute()
-        # data_dir = project_dir / "metrics_data"
         data_dir = project_dir / "data/metrics_data"
         Path.mkdir(data_dir, parents=True, exist_ok=True)
         try:
-            async with aiofiles.open(data_dir / f"turbine_{turbine_metrics.turbine_number}.txt", mode="a") as f:
+            async with aiofiles.open(data_dir / f"turbine_{turbine_metrics.turbine_number}.txt", mode="a") as f:  # Context manager
                 await f.write(turbine_metrics.model_dump_json())
                 await f.write("\n")
         except Exception as e:
@@ -319,8 +316,7 @@ class GridMonitor:
     async def run(self) -> None:
         """Run the grid monitor app."""
         while True:
-        # OPTIONAL: Run the grid monitor app for 30 seconds
-        # for _ in range(30):
+        # for _ in range(30):  Run the grid monitor app for 30 seconds
             try:
                 turbine_metrics = await self.collect_metrics()
                 # Once there are tubine metrics to be stored, store them
@@ -349,7 +345,7 @@ class GridMonitor:
                         produce_random_power_output_in_kwh(),
                     )
             except Exception as e:
-                print(f"Could not run the grid monitor app.\n", e)
+                print("Could not run the grid monitor app.\n", e)
                 raise e
 
 

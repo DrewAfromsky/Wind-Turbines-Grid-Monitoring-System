@@ -13,7 +13,6 @@ WORKDIR /code
 
 # Copy the file with the requirements to the /code directory.
 COPY ./requirements.txt /code/requirements.txt
-# COPY ./src/tests /tests
 
 # Install the package dependencies defined in the requirements file.
 # The --no-cache-dir option tells pip to not save the downloaded packages locally.
@@ -32,8 +31,7 @@ FROM grid-monitor-app as wind-turbine-app
 # Container needs to listen to Streamlit’s (default) port 8501
 EXPOSE 8501
 
-# CMD ["streamlit", "run", "/code/src/streamlit/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
-# An ENTRYPOINT allows you to configure a container that will run as an executable. 
+# Configure the container that will run as an executable. 
 # It contains the entire streamlit run command for the app, avoiding having to call it from the command line
 ENTRYPOINT ["streamlit", "run", "/code/src/streamlit/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
 

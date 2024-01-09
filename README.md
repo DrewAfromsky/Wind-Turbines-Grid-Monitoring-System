@@ -1,7 +1,3 @@
-## Smart Grid Monitoring System
-
-![Architecture](https://github.com/DrewAfromsky/Wind-Turbines-Grid-Monitoring-System/blob/main/Architecture.pdf)
-
 ##### Problem Overview
 - Wind turbines emit metrics (`turbine_number, wind_speed, power_output_in_kwh, operational_status`) at some frequency, asynchronously; whether it is in an `"ok"` operational state or not (`"broken"`)
 	- To simulate broken turbines, we define a number of seconds from the start or repair times, that the turbine should change its status to a `"broken"` operational status state
@@ -40,25 +36,35 @@
 		- `docker compose down --volumes && docker image rm smartgridmonitor-wt smartgridmonitor-gm smartgridmonitor-test`
 			- Stop and remove containers, networks, as well as images
 ##### Considerations
-- https://docs.streamlit.io/knowledge-base/tutorials/deploy/kubernetes
-- https://docs.docker.com/language/python/deploy/
 - **Container Memory**
 	* Running a single process per container will have a more or less stable, and limited amount of memory consumed by the container
 	* If we wanted to deploy this solution to a cluster, we'd be able to set those same memory limits and requirements in a configuration for the container management system like Kubernetes. That way, it will be able to replicate the container in the available machines taking into account the amount of memory needed by them, and the amount available in the machines in the cluster. The app is simple, so this wouldn't necessarily be a problem, but something to consider for more resource-intensive applications, where we would want to adjust the number of container in each machine or add more machines to the cluster
 * **Data Store**
 	* Currently, wind turbine data is emitted and stored/persisted to a shared Docker volume. Ideally, this would be substituted with storing the data to a NoSQL database like DynamoDB as a key-value store, which is good for high-speed reads and writes (i.e. storing turbine metrics in real-time) as well as horizontal scalability
 ##### Test Cases
-- **TODO**
-- 
 * The testing conducted performs unit testing async `POST` requests to the grid monitor app (i.e. testing the ability to produce metrics)
 * Other forms of validations including validating Streamlit app button clicks; the button for running the wind turbines that emit metrics needs to be clicked prior to displaying metrics and retrieving persisted data
 
 ***Things NOT tested:***
+- Test cases where there are not the same number of engineers as there are wind turbines (i.e. 5 wind turbines 3 engineers and 5 wind turbines and 10 engineers)
 * (1.) Test code that makes an external HTTP request to a third-party API and database queries -- ideally would be able to mock the request.  
 * (2.) If working with cloud-based storage or databases like DynamoDB, we can create temporary objects like a table via a `setupclass`, run a test on it, then tear it down via a `teardown class`, using SDK specific API calls to a cloud service.
 * (3.) There are other forms of testing (integration testing, system testing, mutation testing, hypotheses testing, regression testing, etc) that are not in-scope for this problem.
+
+* `Integration tests`: tests on the combined functionality of individual components
+	* Combines several API calls to perform end-to-end tests. The intra-service communications and data transmissions are tested.
+* `Regression Testing`: Bug fixes or new features shouldn’t break the existing behaviors of APIs.
+* `System tests`: tests on the design of a system for expected outputs given inputs
+- `Load Testing`: Simulating different loads. Then we can calculate the capacity of the application.
+- `Stress Testing`: Create high loads to the APIs and test if the APIs are able to function normally.
+- `Security Testing`: This tests the APIs against all possible external threats.
+- `UI Testing`: This tests the UI interactions with the APIs to make sure the data can be displayed properly.
+- `Fuzz Testing`: This injects invalid or unexpected input data into the API and tries to crash the API. In this way, it identifies the API vulnerabilities.
+
 ##### Appendix
 ###### Wind Turbine Metrics Output Example
+- Alternatively, we can simulate non-healthy wind turbines to have varying speeds and power outputs; Healthy wind turbines have consistent wind speed and power output
+
 ```json
 {"turbine_number":1,"wind_speed":74.13200003176283,"power_output_in_kwh":2229.3846024355926,"operational_status":"ok","timestamp":1704427057.340093}
 {"turbine_number":1,"wind_speed":74.13200003176283,"power_output_in_kwh":2229.3846024355926,"operational_status":"ok","timestamp":1704427058.441073}
@@ -82,5 +88,3 @@
 {"turbine_number":2,"wind_speed":53.1781167355966,"power_output_in_kwh":2439.817544613848,"operational_status":"ok","timestamp":1704427072.5106378}
 {"turbine_number":2,"wind_speed":53.1781167355966,"power_output_in_kwh":2439.817544613848,"operational_status":"ok","timestamp":1704427073.5634034}
 ```
-
-- Alternatively, we can simulate non-healthy wind turbines to have varying speeds and power outputs; Healthy wind turbines have consistent wind speed and power output

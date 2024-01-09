@@ -8,8 +8,7 @@ from markdown_text import APP_USAGE, APP_FUNCTIONALITY
 
 
 PROJECT_DIR = Path(__file__).parent.parent.parent.absolute()
-# METRICS_DATA_PATH = PROJECT_DIR / "metrics_data"
-METRICS_DATA_PATH = PROJECT_DIR / "/data/metrics_data"
+METRICS_DATA_PATH = PROJECT_DIR / "data/metrics_data"
 
 
 def run_wind_turbines():
@@ -51,7 +50,7 @@ def create_GUI():
         except Exception as e:
             st.error("Could not run the wind turbines. Please try again. Here was the error:\n")
             st.error(e)
-            # TODO disable the button if the wind turbines are already running
+            # TODO disable the button if the wind turbines are already running; idempotent currently
 
     if st.button(
         "Display Metrics", 
